@@ -1,35 +1,63 @@
+  
 const Discord = require("discord.js");
 
-module.exports = async(client, message) => { // ticket mp
-    if (message.author.bot) return;
-    if(message.channel.type === "dm") {
-        const msg = message.content;
+module.exports = async(client, message) => {
+        if (message.author.bot) return;
 
-        const guild = client.guilds.cache.find(g => g.id === config.guild);
+        if(message.channel.type === "dm") {
+            message.react("📨")
+            const msg = message.content;
 
-        let categorie = guild.channels.cache.find(c => c.name == "Tickets" && c.type == "category");
-        if (!categorie) categorie = await guild.channels.create("Tickets", { type: "category", position: 1 }).catch(e => { return console.error(e) });
+            const guild = client.guilds.cache.find(g => g.id === '694878667129618443');
 
-        if (!guild.channels.cache.find(c => c.name === `${message.author.id}-ticket`)) {
-            guild.channels.create(`${message.author.id}-ticket`, {
-                permissionOverwrites: [
-                    {
-                        deny: 'VIEW_CHANNEL',
-                        id: guild.id
-                    },
-                    {
-                        allow: ['VIEW_CHANNEL', 'READ_MESSAGE_HISTORY', 'ADD_REACTIONS'],
-                        id: message.author.id
-                    },
-                ],
-                parent: categorie.id,
-                topic: `${message.author.id}`
-            })
-            .then(ch => {
+            let categorie = guild.channels.cache.find(c => c.name == "Tickets" && c.type == "category");
+            if (!categorie) categorie = await guild.channels.create("Tickets", { type: "category", position: 1 }).catch(e => { return console.error(e) });
+
+            if (!guild.channels.cache.find(c => c.name === `${message.author.id}-ticket`)) {
+                guild.channels.create(`${message.author.id}-ticket`, {
+                    permissionOverwrites: [
+                        {
+                            deny: 'VIEW_CHANNEL',
+                            id: guild.id
+                        },
+                        {
+                            allow: ['VIEW_CHANNEL', 'READ_MESSAGE_HISTORY', 'ADD_REACTIONS'],
+                            id: '694892829981278208'
+                        },
+                    ],
+                    parent: categorie.id,
+                    topic: `${message.author.id}`
+                })
+                .then(ch => {
+                    const e = new Discord.MessageEmbed()
+                    .setTitle(`Ticket de ${message.author.username} :`)
+                    .setDescription(`Tag: ${message.author.tag}, Id: ${message.author.id}\n${msg}`)
+                    .setTimestamp()
+                    .setFooter("Infinity Pub")
+
+                    if (message.attachments.size > 0) {
+                        e.setImage(message.attachments.first().attachment)
+                    }
+                    else {
+                        e.setImage(null)
+                    }
+                    
+                    message.author.send("Votre ticket a été transmis au support <a:avis_2_2:821430548554711050>");
+
+                    ch.send(e)
+                    .then(msg => {
+                        msg.react("🔒")
+                    })
+                })
+            }
+            else {
+                const channelTicket = guild.channels.cache.find(c => c.name === `${message.author.id}-ticket`)
+
                 const e = new Discord.MessageEmbed()
-                .setTitle(`Un ticket a été ouvert`)
-                .addField(`${message.author.tag}: `, msg)
-                .setFooter("Merci de cliquer sur 🔒 pour fermer le ticket.")
+                .setTitle(`${message.author.username} : `)
+                .setDescription(msg)
+                .setTimestamp()
+                .setFooter("Infinity Pub")
 
                 if (message.attachments.size > 0) {
                     e.setImage(message.attachments.first().attachment)
@@ -38,64 +66,41 @@ module.exports = async(client, message) => { // ticket mp
                     e.setImage(null)
                 }
 
-                ch.send(e)
-                .then(msg => {
-                    msg.react("🔒")
-                })
-            })
+                channelTicket.send(e)
+            }
         }
         else {
-            const channelTicket = guild.channels.cache.find(c => c.name === `${message.author.id}-ticket`)
+            if (message.channel.name.endsWith("-ticket")) {
+                const msg = message.content
 
-            const e = (new Discord.MessageEmbed()
-            .setTitle(`${message.author.tag}:`)
-            .setDescription(msg)
-            .setFooter("Infinity Pub")
-            .setTimestamp())
+                const user = await client.users.fetch(`${message.channel.topic}`)
 
-            if (message.attachments.size > 0) {
-                e.setImage(message.attachments.first().attachment)
+                const e = new Discord.MessageEmbed()
+                .setTitle(message.author.username)
+                .setDescription(msg)
+                .setTimestamp()
+                .setFooter("Infinity Pub")
+
+                const e2 = new Discord.MessageEmbed()
+                .setTitle(`${message.author.username} :`)
+                .setDescription(msg)
+                .setFooter("Infinity Pub")
+                .setTimestamp()
+
+                if (message.attachments.size > 0) {
+                    e.setImage(message.attachments.first().attachment)
+                    e2.setImage(message.attachments.first().attachment)
+                }
+                else {
+                    e.setImage(null)
+                    e2.setImage(null)
+                }
+                
+                message.channel.send(e2)
+
+                await user.send(e)
+
+                message.delete()
             }
-            else {
-                e.setImage(null)
-            }
-
-            channelTicket.send(e)
         }
-    }
-    else {
-        if (message.channel.name.endsWith("-ticket")) {
-            const msg = message.content
-
-            const user = await client.users.fetch(`${message.channel.topic}`)
-
-            const e = (new Discord.MessageEmbed()
-            .setTitle(`${message.author.username}:`)
-            .setDescription(msg)
-            .setFooter("Infinity Pub")
-            .setTimestamp())
-
-            const e2 = new Discord.MessageEmbed()
-            .setTitle(`${message.author.username}:`)
-            .setDescription(msg)
-            .setFooter("Infinity Pub")
-            .setTimestamp()
-
-            if (message.attachments.size > 0) {
-                e.setImage(message.attachments.first().attachment)
-                e2.setImage(message.attachments.first().attachment)
-            }
-            else {
-                e.setImage(null)
-                e2.setImage(null)
-            }
-            
-            message.channel.send(e2)
-
-            await user.send(e)
-
-            message.delete()
-        }
-    }
-};
-
+}
